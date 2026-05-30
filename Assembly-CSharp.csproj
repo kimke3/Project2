@@ -67,6 +67,7 @@
     <Compile Include="Assets\Scripts\JSON\CubeController.cs" />
     <Compile Include="Assets\Scripts\TPS\ThirdPersonController.cs" />
     <Compile Include="Assets\Scripts\TPS\BasicRigidBodyPush.cs" />
+    <Compile Include="Assets\Scripts\FoV\EnemyFOV.cs" />
     <Compile Include="Assets\Scripts\InputSystem\StarterAssetsInputs.cs" />
   </ItemGroup>
   <ItemGroup>
