@@ -2,32 +2,43 @@
 
 public class BasicRigidBodyPush : MonoBehaviour
 {
-	public LayerMask pushLayers;
-	public bool canPush;
-	[Range(0.5f, 5f)] public float strength = 1.1f;
+    public LayerMask pushLayers;
+    public bool canPush = true; // 에디터에서 동작하도록 기본값을 true로 설정해두십시오.
+    [Range(0.5f, 5f)] public float strength = 1.1f;
 
-	private void OnControllerColliderHit(ControllerColliderHit hit)
-	{
-		if (canPush) PushRigidBodies(hit);
-	}
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        if (canPush) PushRigidBodies(hit);
+    }
 
-	private void PushRigidBodies(ControllerColliderHit hit)
-	{
-		// make sure we hit a non kinematic rigidbody
-		Rigidbody body = hit.collider.attachedRigidbody;
-		if (body == null || body.isKinematic) return;
+    private void PushRigidBodies(ControllerColliderHit hit)
+    {
+        // 1. 부딪힌 오브젝트에 Rigidbody가 있는지 확인 (정육면체는 Rigidbody가 필요합니다)
+        Rigidbody body = hit.collider.attachedRigidbody;
+        if (body == null || body.isKinematic) return;
 
-		// make sure we only push desired layer(s)
-		var bodyLayerMask = 1 << body.gameObject.layer;
-		if ((bodyLayerMask & pushLayers.value) == 0) return;
+        // 2. 지정된 레이어 검사
+        var bodyLayerMask = 1 << body.gameObject.layer;
+        if ((bodyLayerMask & pushLayers.value) == 0) return;
 
-		// We dont want to push objects below us
-		if (hit.moveDirection.y < -0.3f) return;
+        // 3. 아래에 있는 오브젝트를 미는 것은 제외
+        if (hit.moveDirection.y < -0.3f) return;
 
-		// Calculate push direction from move direction, horizontal motion only
-		Vector3 pushDir = new Vector3(hit.moveDirection.x, 0.0f, hit.moveDirection.z);
+        // 4. 밀기 방향 계산 및 물리적인 힘(밀쳐내기) 적용
+        Vector3 pushDir = new Vector3(hit.moveDirection.x, 0.0f, hit.moveDirection.z);
+        body.AddForce(pushDir * strength, ForceMode.Impulse);
 
-		// Apply the push and take strength into account
-		body.AddForce(pushDir * strength, ForceMode.Impulse);
-	}
+        // ====================================================================
+        // ★ [추가된 로직] 단순히 닿았을 때 Player 태그를 확인하고 체력을 깎습니다.
+        // ====================================================================
+        if (gameObject.CompareTag("Player"))
+        {
+            // 부딪힌 대상(정육면체)에 CubeController 컴포넌트가 있는지 확인합니다.
+            CubeController cube = body.GetComponent<CubeController>();
+            if (cube != null)
+            {
+                cube.TakeDamage(10);
+            }
+        }
+    }
 }
