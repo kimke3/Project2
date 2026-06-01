@@ -27,18 +27,5 @@ public class BasicRigidBodyPush : MonoBehaviour
         // 4. 밀기 방향 계산 및 물리적인 힘(밀쳐내기) 적용
         Vector3 pushDir = new Vector3(hit.moveDirection.x, 0.0f, hit.moveDirection.z);
         body.AddForce(pushDir * strength, ForceMode.Impulse);
-
-        // ====================================================================
-        // ★ [추가된 로직] 단순히 닿았을 때 Player 태그를 확인하고 체력을 깎습니다.
-        // ====================================================================
-        if (gameObject.CompareTag("Player"))
-        {
-            // 부딪힌 대상(정육면체)에 CubeController 컴포넌트가 있는지 확인합니다.
-            CubeController cube = body.GetComponent<CubeController>();
-            if (cube != null)
-            {
-                cube.TakeDamage(10);
-            }
-        }
     }
 }

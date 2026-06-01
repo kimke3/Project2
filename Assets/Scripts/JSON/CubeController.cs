@@ -1,5 +1,6 @@
 using System.IO;
 using UnityEngine;
+using UnityEngine.UI;
 
 [System.Serializable]
 public class EnemyStat
@@ -11,13 +12,19 @@ public class CubeController : MonoBehaviour
 {
     private string folderName = "Data";
     private string jsonFileName = "EnemyData.json";
-    
+
     private int currentHp;
     private int maxHp;
+
+    [Header("UI Settings")]
+    public Slider hpBar;
+    public Image hpBarFill; // 체력바의 내부 Fill 이미지 참조 추가
+    public Gradient hpGradient; // 체력별 색상 지정을 위한 그라디언트 추가
 
     void Start()
     {
         LoadStatFromJson();
+        UpdateHpBar(); // 초기 UI 및 색상 반영
     }
 
     private void LoadStatFromJson()
@@ -33,7 +40,7 @@ public class CubeController : MonoBehaviour
         {
             string jsonText = File.ReadAllText(filePath);
             EnemyStat stat = JsonUtility.FromJson<EnemyStat>(jsonText);
-            
+
             maxHp = stat.maxHp;
             currentHp = maxHp;
             Debug.Log($"<color=green>[JSON 로드 성공]</color> 초기 체력 설정: {currentHp}");
@@ -41,11 +48,11 @@ public class CubeController : MonoBehaviour
         else
         {
             Debug.LogError($"[오류] JSON 파일을 찾을 수 없습니다: {filePath}");
-            currentHp = 300; 
+            maxHp = 300;
+            currentHp = maxHp;
         }
     }
 
-    // 구체의 스크립트에서 호출해주는 데미지 연산 함수입니다.
     public void TakeDamage(int damage)
     {
         currentHp -= damage;
@@ -53,9 +60,30 @@ public class CubeController : MonoBehaviour
 
         Debug.Log($"<color=yellow>[피격]</color> 구체와 접촉! 현재 체력: {currentHp}");
 
+        UpdateHpBar(); // 데미지 적용 후 UI 및 색상 갱신
+
         if (currentHp <= 0)
         {
             Die();
+        }
+    }
+
+    private void UpdateHpBar()
+    {
+        if (hpBar != null)
+        {
+            hpBar.maxValue = maxHp;
+            hpBar.value = currentHp;
+
+            // 핵심 로직: 현재 슬라이더의 비율(0.0 ~ 1.0)에 따라 그라디언트 색상을 평가하여 Fill에 적용합니다.
+            if (hpBarFill != null && hpGradient != null)
+            {
+                hpBarFill.color = hpGradient.Evaluate(hpBar.normalizedValue);
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"[경고] {gameObject.name}의 hpBar가 유니티 인스펙터에 할당되지 않았습니다.");
         }
     }
 

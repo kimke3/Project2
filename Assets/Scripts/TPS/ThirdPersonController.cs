@@ -47,6 +47,11 @@ namespace StarterAssets
         public float CameraAngleOverride = 0.0f; // 카메라 각도를 미세 조정하거나 고정할 때 사용할 추가 오버라이드 각도
         public bool LockCameraPosition = false; // 모든 축에 대해 카메라 위치를 고정할지 여부
 
+        [Header("Attack Settings")]
+        public float AttackRadius = 1.5f; // 공격 리치(반경)
+        public int AttackDamage = 20;     // 공격 데미지량
+        public LayerMask EnemyLayers;     // 큐브(적)가 속한 레이어
+
         // 시네머신 카메라 내부 계산용 변수 (Yaw: 좌우 회전, Pitch: 상하 회전)
         private float _cinemachineTargetYaw;
         private float _cinemachineTargetPitch;
@@ -391,6 +396,46 @@ namespace StarterAssets
                 // 단발성 입력인 경우 처리가 끝난 후 플래그를 수동으로 꺼주는 것이 좋습니다.
                 _input.attack = false;
             }
+        }
+
+        // 공격 애니메이션의 타격 프레임에 배치할 이벤트 콜백 함수
+        public void OnAttackHit(AnimationEvent animationEvent)
+        {
+            // 애니메이션 블렌딩 중 불완전한 상태가 아닐 때만 판정 진행
+            if (animationEvent.animatorClipInfo.weight > 0.5f)
+            {
+                Debug.Log("<color=cyan>[공격 판정]</color> 타격 프레임 도달. 주변 적 탐색 시작.");
+
+                // 플레이어 앞쪽으로 약간 치우친 공격 중심점 계산
+                Vector3 attackPosition = transform.position + transform.forward * 0.5f;
+
+                // 공격 반경 내의 모든 적 콜라이더 검출
+                Collider[] hitEnemies = Physics.OverlapSphere(attackPosition, AttackRadius, EnemyLayers);
+
+                foreach (Collider enemy in hitEnemies)
+                {
+                    // 큐브에 부착된 CubeController 컴포넌트 탐색
+                    CubeController cube = enemy.GetComponent<CubeController>();
+                    if (cube == null)
+                    {
+                        // 큐브의 부모 오브젝트 등에 스크립트가 있을 경우를 대비한 예외 처리
+                        cube = enemy.GetComponentInParent<CubeController>();
+                    }
+
+                    if (cube != null)
+                    {
+                        cube.TakeDamage(AttackDamage);
+                    }
+                }
+            }
+        }
+
+        // 에디터 씬 뷰에서 공격 범위를 시각적으로 확인하기 위한 기즈모 추가
+        private void OnDrawGizmos()
+        {
+            Gizmos.color = Color.yellow;
+            Vector3 attackPosition = transform.position + transform.forward * 0.5f;
+            Gizmos.DrawWireSphere(attackPosition, AttackRadius);
         }
     }
 }
